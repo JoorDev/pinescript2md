@@ -1,0 +1,56 @@
+//@version=6
+indicator("Price Technical Analysis", overlay=false)
+
+// Input parameters
+lengthMA = 50      // 50-day Moving Average length
+lengthRSI = 14     // Standard RSI length
+supportBars = 20   // Lookback period for support/resistance
+volumeLookback = 7 // 7 days for volume trend
+
+// 4-hour Bollinger Bands parameters
+lengthBB = 20
+srcBB = close
+multBB = 2.0
+
+// MACD parameters
+fastLength = 12
+slowLength = 26
+signalSmoothing = 9
+
+// 20-day moving average
+lengthMA20 = 20
+
+// 1-hour timeframe indicators
+currentPrice1H = request.security(syminfo.tickerid, "60", close)
+rsi1H = request.security(syminfo.tickerid, "60", ta.rsi(close, lengthRSI))
+[macdLine1H, signalLine1H, macdHist1H] = request.security(syminfo.tickerid, "60", ta.macd(close, fastLength, slowLength, signalSmoothing))
+volCurrent1H = request.security(syminfo.tickerid, "60", volume)
+volAvg1H = request.security(syminfo.tickerid, "60", ta.sma(volume, volumeLookback))
+volTrend1H = volCurrent1H > volAvg1H ? "Increasing" : "Decreasing"
+
+// Calculations
+currentPrice = close
+ma50 = ta.sma(close, lengthMA)
+rsiValue = ta.rsi(close, lengthRSI)
+highestHigh = ta.highest(high, supportBars)
+lowestLow = ta.lowest(low, supportBars)
+volCurrent = volume
+volAvg = ta.sma(volume, volumeLookback)
+volTrend = volCurrent > volAvg ? "Increasing" : "Decreasing"
+
+// Bollinger Bands (4-hour timeframe equivalent)
+bbBasis = ta.sma(srcBB, lengthBB)
+bbUpper = bbBasis + multBB * ta.stdev(srcBB, lengthBB)
+bbLower = bbBasis - multBB * ta.stdev(srcBB, lengthBB)
+
+// MACD (4-hour timeframe equivalent)
+[macdLine, signalLine, macdHist] = ta.macd(close, fastLength, slowLength, signalSmoothing)
+
+// 20-day moving average
+ma20 = ta.sma(close, lengthMA20)
+
+// Create Markdown formatted string
+mdText = "# Price Technical Analysis\n" + "**Indicator** | **Value**\n" + "--- | ---\n" + "Current Price | " + str.tostring(currentPrice, "#.########") + "\n" + "50-day MA | " + str.tostring(ma50, "#.########") + "\n" + "20-day MA | " + str.tostring(ma20, "#.########") + "\n" + "RSI | " + str.tostring(rsiValue, "#.########") + "\n" + "Support | " + str.tostring(lowestLow, "#.########") + "\n" + "Resistance | " + str.tostring(highestHigh, "#.########") + "\n" + "Volume Trend | " + volTrend + "\n" + "Upper BB (4H) | " + str.tostring(bbUpper, "#.########") + "\n" + "Middle BB (4H) | " + str.tostring(bbBasis, "#.########") + "\n" + "Lower BB (4H) | " + str.tostring(bbLower, "#.########") + "\n" + "MACD Line (4H) | " + str.tostring(macdLine, "#.########") + "\n" + "Signal Line (4H) | " + str.tostring(signalLine, "#.########") + "\n" + "Histogram (4H) | " + str.tostring(macdHist, "#.########") + "\n" + "Current Price (1H) | " + str.tostring(currentPrice1H, "#.########") + "\n" + "RSI (1H) | " + str.tostring(rsi1H, "#.########") + "\n" + "MACD Line (1H) | " + str.tostring(macdLine1H, "#.########") + "\n" + "Signal Line (1H) | " + str.tostring(signalLine1H, "#.########") + "\n" + "Histogram (1H) | " + str.tostring(macdHist1H, "#.########") + "\n" + "Volume Trend (1H) | " + volTrend1H + "\n"
+
+// Print the formatted text to the logs
+log.info(mdText)
